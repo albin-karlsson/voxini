@@ -137,7 +137,6 @@ class HoudiniCodeGenerator:
             print(f"Code executed successfully.")
             
             if self.save_script and self.filepath:
-                # Open the file at the specified path with write ('w') mode
                 with open(self.filepath, 'w') as file:
                     # Write the string containing your Python code to the file
                     file.write(code)
