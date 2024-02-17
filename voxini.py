@@ -39,8 +39,6 @@ def generate(kwargs):
         generator.set_base_prompt(prompt)
         
         if kwargs["node"].parm("save_script").eval():
-            generator.set_save_script()
-            
             filepath = kwargs["node"].parm("filepath").eval()
             
             if filepath:
@@ -48,6 +46,8 @@ def generate(kwargs):
             else:
                 print("No filepath specified. . .")
                 return
+            
+            generator.set_save_script()      
         
         generator.make_call()
 
