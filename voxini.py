@@ -25,7 +25,6 @@
 #                    new_geo_node = hou.node("/obj").createNode("geo")
 #                    
 #                    return new_geo_node
-
 from openai import OpenAI
 import re
 import hou
@@ -34,21 +33,41 @@ def generate(kwargs):
     # Get promp parameter
     prompt = kwargs["node"].parm("prompt").eval()
     
-    if prompt is not "":
+    if prompt != "":
         client = OpenAI()
         generator = HoudiniCodeGenerator(client)
         generator.set_base_prompt(prompt)
+        
+        if kwargs["node"].parm("save_script").eval():
+            generator.set_save_script()
+            
+            filepath = kwargs["node"].parm("filepath").eval()
+            
+            if filepath:
+                generator.set_filepath(filepath)
+            else:
+                print("No filepath specified. . .")
+                return
+        
         generator.make_call()
 
 class HoudiniCodeGenerator:
     def __init__(self, client):
         self.client = client
         self.base_prompt = ""
+        self.save_script = False
+        self.filepath = ""
         self.tries = 0
         self.error = ""
 
     def set_base_prompt(self, prompt):
         self.base_prompt = prompt
+        
+    def set_save_script(self):
+        self.save_script = True
+        
+    def set_filepath(self, filepath):
+        self.filepath = filepath
 
     def make_call(self):
         if self.tries >= 5:
@@ -56,11 +75,11 @@ class HoudiniCodeGenerator:
             return
 
         system_message = (
-            "Generate Python code in a code block tagged as Python code optimized for seamless integration within Houdini using its API. "
-            "Ensure the output adheres STRICTLY to Houdini's environment and API specifications. "
-            "The generated code should revolve around a single geometry (geo) variable named 'geo_node' as the central container for all elements the central container for all elements. "
+            "Generate Python code in a code block optimized for seamless integration within Houdini. "
+            "Ensure the output adheres strictly to Houdini's environment and API specifications. "
+            "The code should revolve around a single geometry (geo) as the container for all elements. "
             "Organize the nodes logically and establish coherent connections to uphold clarity and functionality. "
-            "Remember to set the display and render flags appropriately, typically to the last object in the node chain or the object that logically should have them."
+            "Set the display and render flags to the last object in the node chain or the object that logically should have them."
         )
 
         if self.error:
@@ -116,6 +135,15 @@ class HoudiniCodeGenerator:
             self.make_call()
         else:
             print(f"Code executed successfully.")
+            
+            if self.save_script and self.filepath:
+                # Open the file at the specified path with write ('w') mode
+                with open(self.filepath, 'w') as file:
+                    # Write the string containing your Python code to the file
+                    file.write(code)
+                
+                print(f"Python script saved to {self.filepath}")
+                                        
             # Reset tries and error for future calls
             self.tries = 0
             self.error = ""
