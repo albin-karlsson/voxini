@@ -31,7 +31,7 @@ import re
 import hou
 
 def generate(kwargs):
-    # Get promp parameter
+    # Get prompt parameter
     prompt = kwargs["node"].parm("prompt").eval()
     
     if prompt != "":
@@ -112,7 +112,9 @@ class HoudiniCodeGenerator:
             formatted_content = matches.group(1)  # Extracted code part
 
             # Process the content (e.g., remove unwanted lines, add necessary imports)
-            # This part remains as in your original function
+
+            if "import hou" not in formatted_content:
+                formatted_content = "import hou\n" + formatted_content
 
             return formatted_content
         else:
@@ -147,4 +149,3 @@ class HoudiniCodeGenerator:
             # Reset tries and error for future calls
             self.tries = 0
             self.error = ""
-
