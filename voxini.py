@@ -30,6 +30,16 @@ from openai import OpenAI
 import re
 import hou
 
+def generate(kwargs):
+    # Get promp parameter
+    prompt = kwargs["node"].parm("prompt").eval()
+    
+    if prompt is not "":
+        client = OpenAI()
+        generator = HoudiniCodeGenerator(client)
+        generator.set_base_prompt(prompt)
+        generator.make_call()
+
 class HoudiniCodeGenerator:
     def __init__(self, client):
         self.client = client
@@ -47,12 +57,10 @@ class HoudiniCodeGenerator:
 
         system_message = (
             "Generate Python code in a code block tagged as Python code optimized for seamless integration within Houdini using its API. "
-            "Ensure the output adheres strictly to Houdini's environment and API specifications. "
-            "The generated code should revolve around a single geometry (geo) variable named 'geo_node' "
-            "as the central container for all elements. Organize the nodes logically and establish "
-            "coherent connections to uphold clarity and functionality. Remember to set the display "
-            "and render flags appropriately, typically to the last object in the node chain or the "
-            "object that logically should have them."
+            "Ensure the output adheres STRICTLY to Houdini's environment and API specifications. "
+            "The generated code should revolve around a single geometry (geo) variable named 'geo_node' as the central container for all elements the central container for all elements. "
+            "Organize the nodes logically and establish coherent connections to uphold clarity and functionality. "
+            "Remember to set the display and render flags appropriately, typically to the last object in the node chain or the object that logically should have them."
         )
 
         if self.error:
@@ -94,10 +102,12 @@ class HoudiniCodeGenerator:
         hou.undos.clear()
 
         try:
-            with hou.undos.group("Executing code block"):
-                exec(code, globals(), locals())
+            exec(code, globals(), locals())
+            # hou.undos.group does not work in a callback script
+#            with hou.undos.group("Executing code block"):
+#                exec(code, globals(), locals())
         except Exception as e:
-            hou.undos.performUndo()
+#            hou.undos.performUndo()
             error_message = f"{type(e).__name__}: {e}"
             print(f"Attempt {self.tries + 1}: Error executing code - {error_message}")
 
@@ -110,8 +120,3 @@ class HoudiniCodeGenerator:
             self.tries = 0
             self.error = ""
 
-# Usage example
-client = OpenAI()  # Ensure you have initialized the OpenAI client correctly
-generator = HoudiniCodeGenerator(client)
-generator.set_base_prompt("Create 5 different spheres of different sizes. Merge them all together and put a bounding box around all of them.")
-generator.make_call()
