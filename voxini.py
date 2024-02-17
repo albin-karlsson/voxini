@@ -102,7 +102,7 @@ class HoudiniCodeGenerator:
         if formatted_content:
             self.try_run_code(formatted_content)
         else:
-            print("Could not format content. Try again...")
+            print("Could not format content. Try again. . .")
 
     def format_content(self, content):
         pattern = r"```python\n(.*?)\n```"
